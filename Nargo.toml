@@ -1,0 +1,6 @@
+[package]
+name = "privacy_pool"
+type = "bin"
+authors = [""]
+
+[dependencies]

@@ -1,0 +1,15 @@
+{
+  "name": "privacy_pool",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "scripts": {
+    "prove": "bb prove -b ./target/privacy_pool.json -w ./target/privacy_pool.gz -o ./target"
+  }
+}
