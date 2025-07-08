@@ -4,12 +4,18 @@
   "type": "module",
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "prettier": "^3.0.0"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "scripts": {
-    "prove": "bb prove -b ./target/privacy_pool.json -w ./target/privacy_pool.gz -o ./target"
+    "prove": "bb prove -b ./target/privacy_pool.json -w ./target/privacy_pool.gz -o ./target",
+    "fmt": "bunx prettier --write \"**/*.ts\""
+  },
+  "dependencies": {
+    "@zk-kit/imt": "^2.0.0-beta.8",
+    "poseidon-lite": "^0.3.0"
   }
 }

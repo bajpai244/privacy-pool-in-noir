@@ -1,26 +1,28 @@
 // Take an argument from the command line for number of iterations
 // and generate a Prover.toml file with x: "[filled_with_0s]"
 
-import { writeFileSync } from 'fs';
-import { join } from 'path';
-import { argv } from 'process';
+import { writeFileSync } from "fs";
+import { join } from "path";
+import { argv } from "process";
 
 const main = () => {
+  const iterations = parseInt(argv[2], 10) || 1000; // Default to 1000 if no argument is provided
 
-const iterations = parseInt(argv[2], 10) || 1000; // Default to 1000 if no argument is provided
+  const filledArray = Array(iterations)
+    .fill("0")
+    .map((_, idx) => {
+      return `"${idx}"`;
+    })
+    .join(", ");
 
-const filledArray = Array(iterations).fill("0").map((_, idx) => {
-    return `"${idx}"`
-}).join(', ');
+  const proverTomlContent = `x = [${filledArray}]\n`;
 
-const proverTomlContent = `x = [${filledArray}]\n`;
+  const filePath = join("./Prover.toml");
+  writeFileSync(filePath, proverTomlContent, "utf8");
 
-const filePath = join('./Prover.toml');
-writeFileSync(filePath, proverTomlContent, 'utf8');
-
-// console.log(`Prover.toml generated with x: [${filledArray}]`);
-console.log(`File written to ${filePath}`);
-}
+  // console.log(`Prover.toml generated with x: [${filledArray}]`);
+  console.log(`File written to ${filePath}`);
+};
 
 main();
 
