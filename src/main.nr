@@ -6,8 +6,8 @@ fn main(
     value: Field,
     secret: Field,
     nullifier: Field,
-    newSecret: Field,
-    newNullifier: Field,
+    new_secret: Field,
+    new_nullifier: Field,
     withdrawAmount: pub Field,
     merkle_proof_length: u32,
     merkle_proof_indices: [u1; 16],
@@ -39,7 +39,7 @@ fn main(
         0
     } else {
         // return new state commitment
-        hash_3([new_balance, secret, nullifier])
+        hash_3([new_balance, new_secret, new_nullifier])
     }
 }
 
