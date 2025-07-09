@@ -28,6 +28,9 @@ const main = async () => {
     merkle_root: tree.root.toString(),
   });
 
+  const proof = await backend.generateProof(witness);
+  console.log("proof", proof);
+
   console.log("merkle root", tree.root.toString(16));
   console.log("return value", returnValue);
 };

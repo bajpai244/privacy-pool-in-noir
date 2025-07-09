@@ -7,8 +7,7 @@ fn main(
     merkle_proof_indices: [u1; 16],
     merkle_proof_siblings: [Field; 16],
     merkle_root: pub Field,
-) -> pub Field {
-
+) {
     // Calculate Merkle root.
     let _merkle_root = binary_merkle_root(
         hash_2,
@@ -20,7 +19,6 @@ fn main(
 
     assert(merkle_root == _merkle_root, "merkle roots don't match");
 
-    _merkle_root
     // 2
 }
 
