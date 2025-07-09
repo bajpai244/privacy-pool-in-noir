@@ -18,6 +18,8 @@
     "get-latest-note": "bun run scripts/get_latest_note.ts"
   },
   "dependencies": {
+    "@aztec/bb.js": "^0.87.9",
+    "@noir-lang/noir_js": "^1.0.0-beta.7",
     "@zk-kit/imt": "^2.0.0-beta.8",
     "poseidon-lite": "^0.3.0",
     "unstorage": "^1.16.0"

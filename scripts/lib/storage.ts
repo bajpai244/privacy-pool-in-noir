@@ -20,7 +20,9 @@ export class Storage {
   }
 
   async getLeaves() {
-    return await this.storage.getItem<IMTNode[]>("tree:leaves");
+    return (await this.storage.getItem<string[]>("tree:leaves"))?.map(v => {
+      return BigInt(v);
+    });
   }
 
   async setNote(note: Note) {
