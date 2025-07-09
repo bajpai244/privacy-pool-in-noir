@@ -51,4 +51,17 @@ export class Storage {
       nullifierHash,
     };
   }
+
+  async insertNullifierHash(nullifierHash: bigint) {
+    await this.storage.setItem(
+      `nulliferHashMap:${nullifierHash.toString()}`,
+      true
+    );
+  }
+
+  async nullifierHashExists(nullifierHash: bigint) {
+    return await this.storage.hasItem(
+      `nulliferHashMap:${nullifierHash.toString()}`
+    );
+  }
 }
