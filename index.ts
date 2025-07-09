@@ -6,7 +6,7 @@ const main = async () => {
   const zeroValue = 0;
   const arity = 2;
 
-  const tree = new IMT(poseidon2,depth, zeroValue, arity);
+  const tree = new IMT(poseidon2, depth, zeroValue, arity);
 
   tree.insert(1);
   tree.insert(2);
@@ -19,15 +19,31 @@ const main = async () => {
   console.log(tree.verifyProof(proof));
 
   console.log("note_committment:", `"${proof.leaf}"`);
-  console.log("merkle_proof_indices:", "[",proof.pathIndices.map((v) => {return `"${v}"`}).join(", "), "]");
-  console.log("merkle_proof_siblings:", "[",proof.siblings.map((v) => {return `"${v}"`}).join(", "), "]");
+  console.log(
+    "merkle_proof_indices:",
+    "[",
+    proof.pathIndices
+      .map(v => {
+        return `"${v}"`;
+      })
+      .join(", "),
+    "]"
+  );
+  console.log(
+    "merkle_proof_siblings:",
+    "[",
+    proof.siblings
+      .map(v => {
+        return `"${v}"`;
+      })
+      .join(", "),
+    "]"
+  );
   console.log("merkle_proof_length:", `"${proof.siblings.length}"`);
 
   console.log("merkle_proof_root:", `"${proof.root}"`);
 
   // console.log('proof', proof);
 };
-
-
 
 main();

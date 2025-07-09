@@ -12,10 +12,12 @@
   },
   "scripts": {
     "prove": "bb prove -b ./target/privacy_pool.json -w ./target/privacy_pool.gz -o ./target",
-    "fmt": "bunx prettier --write \"**/*.ts\""
+    "fmt": "bunx prettier --write \"**/*.ts\"",
+    "init-tree": "bun run scripts/init_tree.ts"
   },
   "dependencies": {
     "@zk-kit/imt": "^2.0.0-beta.8",
-    "poseidon-lite": "^0.3.0"
+    "poseidon-lite": "^0.3.0",
+    "unstorage": "^1.16.0"
   }
 }
