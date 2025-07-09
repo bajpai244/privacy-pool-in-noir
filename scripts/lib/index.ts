@@ -1,5 +1,5 @@
-import { IMT, type IMTNode } from "@zk-kit/imt";
-import { poseidon2 } from "poseidon-lite";
+import { IMT } from "@zk-kit/imt";
+import { poseidon1, poseidon2, poseidon3 } from "poseidon-lite";
 import { DB_PATH, TREE_ARITY, TREE_DEPTH, TREE_ZERO_VALUE } from "./constants";
 import { Storage } from "./storage";
 
@@ -31,8 +31,8 @@ export const generateNote = (value: number) => {
   const secret = Math.floor(Math.random() * 1000000);
   const nullifier = Math.floor(Math.random() * 1000000);
 
-  const commitment = poseidon2([value, secret]);
-  const nullifierHash = poseidon2([commitment, nullifier]);
+  const commitment = poseidon3([value, secret, nullifier]);
+  const nullifierHash = poseidon1([nullifier]);
 
   return {
     value,

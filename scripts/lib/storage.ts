@@ -2,7 +2,7 @@ import type { IMTNode } from "@zk-kit/imt";
 import { createStorage } from "unstorage";
 import fsDriver from "unstorage/drivers/fs";
 import type { Note } from "../types";
-import { poseidon2 } from "poseidon-lite";
+import { poseidon1, poseidon3 } from "poseidon-lite";
 
 export class Storage {
   private storage: ReturnType<typeof createStorage>;
@@ -42,8 +42,8 @@ export class Storage {
       return null;
     }
 
-    const commitment = poseidon2([note.value, note.secret]);
-    const nullifierHash = poseidon2([commitment, note.nullifier]);
+    const commitment = poseidon3([note.value, note.secret, note.nullifier]);
+    const nullifierHash = poseidon1([note.nullifier]);
 
     return {
       ...note,
