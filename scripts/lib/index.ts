@@ -28,8 +28,8 @@ export const getTreeAndStorage = async () => {
 
 // NOTE: in production, we should use a secure random number generator
 export const generateNote = (value: number) => {
-  const secret = Math.floor(Math.random() * 1000000);
-  const nullifier = Math.floor(Math.random() * 1000000);
+  const secret = generateRandomInt();
+  const nullifier = generateRandomInt();
 
   const commitment = poseidon3([value, secret, nullifier]);
   const nullifierHash = poseidon1([nullifier]);
@@ -41,4 +41,8 @@ export const generateNote = (value: number) => {
     commitment: commitment,
     nullifierHash: nullifierHash,
   };
+};
+
+export const generateRandomInt = () => {
+  return Math.floor(Math.random() * 1000000);
 };

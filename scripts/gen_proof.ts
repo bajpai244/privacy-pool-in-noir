@@ -1,6 +1,6 @@
 import { UltraHonkBackend } from "@aztec/bb.js";
 import { Noir } from "@noir-lang/noir_js";
-import { getTreeAndStorage } from "./lib";
+import { generateRandomInt, getTreeAndStorage } from "./lib";
 import circuit from "../target/privacy_pool.json";
 
 const main = async () => {
@@ -19,7 +19,12 @@ const main = async () => {
   const merkleProof = tree.createProof(noteCommitmentIndex);
 
   const { witness, returnValue } = await noir.execute({
-    note_commitment: note.commitment.toString(),
+    value: note.value,
+    secret: note.secret,
+    nullifier: note.nullifier,
+    newSecret: generateRandomInt(),
+    newNullifier: generateRandomInt(),
+    withdrawAmount: note.value,
     merkle_proof_length: merkleProof.siblings.length,
     merkle_proof_indices: merkleProof.pathIndices,
     merkle_proof_siblings: merkleProof.siblings.map(v => {
