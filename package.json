@@ -14,7 +14,8 @@
     "prove": "bb prove -b ./target/privacy_pool.json -w ./target/privacy_pool.gz -o ./target",
     "fmt": "bunx prettier --write \"**/*.ts\"",
     "init-tree": "bun run scripts/init_tree.ts",
-    "generate-note-and-insert": "bun run scripts/generate_note_and_insert.ts"
+    "generate-note-and-insert": "bun run scripts/generate_note_and_insert.ts",
+    "get-latest-note": "bun run scripts/get_latest_note.ts"
   },
   "dependencies": {
     "@zk-kit/imt": "^2.0.0-beta.8",
