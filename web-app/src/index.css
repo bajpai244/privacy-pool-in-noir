@@ -1,0 +1,141 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import retro monospace font */
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=VT323:wght@400&display=swap');
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 120 100% 5%;
+    --foreground: 120 100% 85%;
+
+    --card: 120 50% 8%;
+    --card-foreground: 120 100% 85%;
+
+    --popover: 120 50% 8%;
+    --popover-foreground: 120 100% 85%;
+
+    --primary: 120 100% 50%;
+    --primary-foreground: 120 100% 5%;
+
+    --secondary: 45 100% 50%;
+    --secondary-foreground: 45 100% 5%;
+
+    --muted: 120 20% 15%;
+    --muted-foreground: 120 30% 60%;
+
+    --accent: 45 100% 60%;
+    --accent-foreground: 45 100% 5%;
+
+    --destructive: 0 100% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 120 50% 25%;
+    --input: 120 50% 15%;
+    --ring: 120 100% 50%;
+
+    --radius: 0.125rem;
+
+    --sidebar-background: 120 100% 5%;
+    --sidebar-foreground: 120 100% 85%;
+    --sidebar-primary: 120 100% 50%;
+    --sidebar-primary-foreground: 120 100% 5%;
+    --sidebar-accent: 120 50% 15%;
+    --sidebar-accent-foreground: 120 100% 85%;
+    --sidebar-border: 120 50% 25%;
+    --sidebar-ring: 120 100% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Courier Prime', 'VT323', monospace;
+    background-image: 
+      radial-gradient(circle at 1px 1px, rgba(0, 255, 0, 0.1) 1px, transparent 0);
+    background-size: 20px 20px;
+  }
+
+  .retro-crt {
+    position: relative;
+  }
+
+  .retro-crt::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      transparent 50%, 
+      rgba(0, 255, 0, 0.03) 50%
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .retro-button {
+    @apply bg-primary text-primary-foreground border-2 border-primary px-6 py-3 font-bold uppercase tracking-wider;
+    box-shadow: 4px 4px 0px hsl(var(--primary));
+    transition: all 0.1s ease-in-out;
+  }
+
+  .retro-button:hover {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px hsl(var(--primary));
+  }
+
+  .retro-button:active {
+    transform: translate(4px, 4px);
+    box-shadow: 0px 0px 0px hsl(var(--primary));
+  }
+
+  .retro-input {
+    @apply bg-input border-2 border-primary text-foreground p-3 font-mono;
+    box-shadow: inset 2px 2px 0px rgba(0, 0, 0, 0.3);
+  }
+
+  .retro-card {
+    @apply bg-card border-2 border-primary p-6;
+    box-shadow: 8px 8px 0px hsl(var(--primary));
+  }
+
+  .terminal-text {
+    font-family: 'VT323', monospace;
+    text-shadow: 0 0 10px currentColor;
+  }
+
+  .blink {
+    animation: blink 1s infinite;
+  }
+
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  .glitch {
+    animation: glitch 0.3s infinite;
+  }
+
+  @keyframes glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(-2px, -2px); }
+    60% { transform: translate(2px, 2px); }
+    80% { transform: translate(2px, -2px); }
+    100% { transform: translate(0); }
+  }
+}
