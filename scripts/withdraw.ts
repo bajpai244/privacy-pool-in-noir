@@ -1,4 +1,4 @@
-import { getTreeAndStorage } from "./lib";
+import { generateProof, getTreeAndStorage } from "./lib";
 
 const main = async () => {
   const { storage, tree } = await getTreeAndStorage();
@@ -7,6 +7,8 @@ const main = async () => {
   if (!note) {
     throw new Error("Note not found");
   }
+
+  const proof = await generateProof(note, tree);
 };
 
 main();
