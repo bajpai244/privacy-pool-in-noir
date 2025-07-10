@@ -4,6 +4,9 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DollarSign, TrendingUp, TrendingDown, Clock, Monitor } from 'lucide-react';
+import { LocalStorage } from '@/lib/storage';
+import type { Note, IMTNode } from '@/lib/types';
+import { debugStorage } from '@/lib/debug';
 
 interface Transaction {
   id: string;
@@ -20,6 +23,54 @@ const BankingInterface = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [terminalText, setTerminalText] = useState('');
+  const [storage] = useState(() => new LocalStorage());
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [currentNote, setCurrentNote] = useState<Note | null>(null);
+  const [treeRoot, setTreeRoot] = useState<string>('');
+  const [wasReinitialized, setWasReinitialized] = useState<boolean>(false);
+
+  // Initialize storage and load existing data with validation
+  useEffect(() => {
+    const initializeStorage = async () => {
+      try {
+        console.log('Initializing storage with validation...');
+        
+        // Use the new validation-based initialization
+        const { balances, note, tree, isReinitialized } = await storage.initializeWithValidation();
+        
+        if (isReinitialized) {
+          console.log('System was reinitialized due to data inconsistencies');
+          setWasReinitialized(true);
+          // Show a brief notification that system was reset
+          setTerminalText('SYSTEM RESET - DATA INCONSISTENCIES DETECTED');
+          setTimeout(() => {
+            setTerminalText('NOIR-PRIVACY-POOL TERMINAL v2.1 READY...');
+          }, 2000);
+        }
+        
+        // Set all state from validated data
+        setAccountBalance(balances.accountBalance);
+        setPoolBalance(balances.poolBalance);
+        setCurrentNote(note);
+        setTreeRoot(tree.root.toString());
+        
+        console.log('Storage initialized successfully:', {
+          balances,
+          note: note ? `$${note.value}` : 'None',
+          treeRoot: tree.root.toString(),
+          isReinitialized
+        });
+
+        setIsInitialized(true);
+      } catch (error) {
+        console.error('Critical error during storage initialization:', error);
+        // Even if there's an error, we need to allow the UI to render
+        setIsInitialized(true);
+      }
+    };
+
+    initializeStorage();
+  }, [storage]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -41,28 +92,82 @@ const BankingInterface = () => {
     typeWriter();
   }, []);
 
-  const handleDeposit = () => {
+  const handleDeposit = async () => {
     const depositAmount = parseFloat(amount);
     if (depositAmount > 0 && depositAmount <= accountBalance) {
-      setAccountBalance(prev => prev - depositAmount);
-      setPoolBalance(prev => prev + depositAmount);
-      const newTransaction: Transaction = {
-        id: Date.now().toString(),
-        type: 'deposit',
-        amount: depositAmount,
-        date: new Date(),
-        description: `Deposit to pool`
-      };
-      setTransactions(prev => [newTransaction, ...prev]);
-      setAmount('');
+      try {
+        // Generate a new note for the deposit
+        const note = storage.generateNote(depositAmount);
+        console.log('Generated note for deposit:', note);
+        
+        // Insert note into tree and update storage
+        const tree = await storage.updateTreeWithNote(note);
+        console.log('Tree root after deposit:', tree.root.toString());
+        
+        // Store the note
+        await storage.setNote(note);
+        setCurrentNote(note);
+        setTreeRoot(tree.root.toString());
+        
+        // Update balances
+        const newAccountBalance = accountBalance - depositAmount;
+        const newPoolBalance = poolBalance + depositAmount;
+        
+        setAccountBalance(newAccountBalance);
+        setPoolBalance(newPoolBalance);
+        
+        // Save balances to localStorage
+        await storage.setBalances({
+          accountBalance: newAccountBalance,
+          poolBalance: newPoolBalance
+        });
+        
+        // Validate the state after deposit
+        const isValid = await storage.validateAllData();
+        if (!isValid) {
+          console.error('Data validation failed after deposit. This should not happen.');
+          alert('Warning: Data inconsistency detected after deposit. Please refresh the page.');
+        }
+        
+        const newTransaction: Transaction = {
+          id: Date.now().toString(),
+          type: 'deposit',
+          amount: depositAmount,
+          date: new Date(),
+          description: `Deposit to pool (Note: ${note.commitment.toString().slice(0, 8)}...)`
+        };
+        setTransactions(prev => [newTransaction, ...prev]);
+        setAmount('');
+        
+        console.log('Deposit completed successfully');
+      } catch (error) {
+        console.error('Error during deposit:', error);
+      }
     }
   };
 
-  const handleWithdrawal = () => {
+  const handleWithdrawal = async () => {
     const withdrawAmount = parseFloat(amount);
     if (withdrawAmount > 0 && withdrawAmount <= poolBalance) {
-      setPoolBalance(prev => prev - withdrawAmount);
-      setAccountBalance(prev => prev + withdrawAmount);
+      const newPoolBalance = poolBalance - withdrawAmount;
+      const newAccountBalance = accountBalance + withdrawAmount;
+      
+      setPoolBalance(newPoolBalance);
+      setAccountBalance(newAccountBalance);
+      
+      // Save to localStorage
+      await storage.setBalances({
+        accountBalance: newAccountBalance,
+        poolBalance: newPoolBalance
+      });
+      
+      // Validate the state after withdrawal
+      const isValid = await storage.validateAllData();
+      if (!isValid) {
+        console.error('Data validation failed after withdrawal. This should not happen.');
+        alert('Warning: Data inconsistency detected after withdrawal. Please refresh the page.');
+      }
+      
       const newTransaction: Transaction = {
         id: Date.now().toString(),
         type: 'withdrawal',
@@ -91,6 +196,21 @@ const BankingInterface = () => {
     });
   };
 
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen bg-background retro-crt p-4 flex items-center justify-center">
+        <div className="text-center">
+          <div className="terminal-text text-2xl text-primary mb-4">
+            INITIALIZING PRIVACY POOL...
+          </div>
+          <div className="terminal-text text-lg text-accent animate-pulse">
+            Loading storage and tree data<span className="blink">█</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background retro-crt p-4">
       {/* Header */}
@@ -106,6 +226,54 @@ const BankingInterface = () => {
         </div>
         <div className="terminal-text text-sm text-muted-foreground mt-2">
           System Time: {formatTime(currentTime)}
+        </div>
+        <div className="terminal-text text-xs text-muted-foreground mt-1">
+          Storage: Initialized | Tree: Ready
+          {wasReinitialized && (
+            <span className="text-yellow-500 ml-2">| SYSTEM RESET</span>
+          )}
+        </div>
+        <div className="terminal-text text-xs text-muted-foreground mt-1">
+          Tree Root: {treeRoot ? `${treeRoot.slice(0, 16)}...` : 'Loading...'}
+        </div>
+        {currentNote && (
+          <div className="terminal-text text-xs text-muted-foreground mt-1">
+            Current Note: ${currentNote.value} (Commitment: {currentNote.commitment.toString().slice(0, 8)}...)
+          </div>
+        )}
+        <div className="mt-4 flex gap-2 flex-wrap">
+          <Button
+            onClick={() => debugStorage.inspectAll()}
+            variant="outline"
+            size="sm"
+            className="terminal-text text-xs"
+          >
+            Debug Storage
+          </Button>
+          <Button
+            onClick={() => debugStorage.getTree()}
+            variant="outline"
+            size="sm"
+            className="terminal-text text-xs"
+          >
+            Debug Tree
+          </Button>
+          <Button
+            onClick={() => debugStorage.validateData()}
+            variant="outline"
+            size="sm"
+            className="terminal-text text-xs"
+          >
+            Validate Data
+          </Button>
+          <Button
+            onClick={() => debugStorage.forceReinitialize()}
+            variant="outline"
+            size="sm"
+            className="terminal-text text-xs"
+          >
+            Force Reset
+          </Button>
         </div>
       </div>
 
