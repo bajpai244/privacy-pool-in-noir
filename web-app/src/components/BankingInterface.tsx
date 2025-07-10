@@ -241,40 +241,7 @@ const BankingInterface = () => {
             Current Note: ${currentNote.value} (Commitment: {currentNote.commitment.toString().slice(0, 8)}...)
           </div>
         )}
-        <div className="mt-4 flex gap-2 flex-wrap">
-          <Button
-            onClick={() => debugStorage.inspectAll()}
-            variant="outline"
-            size="sm"
-            className="terminal-text text-xs"
-          >
-            Debug Storage
-          </Button>
-          <Button
-            onClick={() => debugStorage.getTree()}
-            variant="outline"
-            size="sm"
-            className="terminal-text text-xs"
-          >
-            Debug Tree
-          </Button>
-          <Button
-            onClick={() => debugStorage.validateData()}
-            variant="outline"
-            size="sm"
-            className="terminal-text text-xs"
-          >
-            Validate Data
-          </Button>
-          <Button
-            onClick={() => debugStorage.forceReinitialize()}
-            variant="outline"
-            size="sm"
-            className="terminal-text text-xs"
-          >
-            Force Reset
-          </Button>
-        </div>
+
       </div>
 
       <div className="max-w-6xl mx-auto grid gap-6 grid-cols-1 lg:grid-cols-3">
