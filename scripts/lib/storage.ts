@@ -16,7 +16,10 @@ export class Storage {
   }
 
   async setLeaves(leaves: IMTNode[]) {
-    await this.storage.setItem("tree:leaves", leaves);
+    await this.storage.setItem(
+      "tree:leaves",
+      leaves.map(leaf => leaf.toString())
+    );
   }
 
   async getLeaves() {

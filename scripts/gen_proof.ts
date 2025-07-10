@@ -12,7 +12,7 @@ const main = async () => {
     throw new Error("Note not found");
   }
 
-  const proof = await generateProof(note, tree);
+  const { proof } = await generateProof(note, tree);
 
   console.log("proof", proof);
 

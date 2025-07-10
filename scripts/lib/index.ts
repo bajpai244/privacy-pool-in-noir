@@ -4,7 +4,7 @@ import { DB_PATH, TREE_ARITY, TREE_DEPTH, TREE_ZERO_VALUE } from "./constants";
 import { Storage } from "./storage";
 import type { Note } from "../types";
 import { Noir } from "@noir-lang/noir_js";
-import { UltraHonkBackend } from "@aztec/bb.js";
+import { UltraHonkBackend, type ProofData } from "@aztec/bb.js";
 import circuit from "../../target/privacy_pool.json";
 
 export * from "./constants";
@@ -51,20 +51,30 @@ export const generateRandomInt = () => {
   return Math.floor(Math.random() * 1000000);
 };
 
-export const generateProof = async (note: Note, tree: IMT) => {
+export const generateProof = async (
+  note: Note,
+  tree: IMT,
+  value?: number
+): Promise<{ proof: ProofData; newNote: Note | null }> => {
   const noir = new Noir(circuit as any);
   const backend = new UltraHonkBackend(circuit.bytecode);
 
   const noteCommitmentIndex = tree.indexOf(note.commitment);
   const merkleProof = tree.createProof(noteCommitmentIndex);
 
+  const withdrawAmount = value ? value : note.value;
+
+  const newNoteValue = note.value - withdrawAmount;
+  const newNoteSecret = generateRandomInt();
+  const newNoteNullifier = generateRandomInt();
+
   const { witness } = await noir.execute({
     value: note.value,
     secret: note.secret,
     nullifier: note.nullifier,
-    new_secret: generateRandomInt(),
-    new_nullifier: generateRandomInt(),
-    withdrawAmount: note.value,
+    new_secret: newNoteSecret,
+    new_nullifier: newNoteNullifier,
+    withdrawAmount: withdrawAmount,
     merkle_proof_length: merkleProof.siblings.length,
     merkle_proof_indices: merkleProof.pathIndices,
     merkle_proof_siblings: merkleProof.siblings.map(v => {
@@ -75,5 +85,26 @@ export const generateProof = async (note: Note, tree: IMT) => {
 
   const proof = await backend.generateProof(witness);
 
-  return proof;
+  return {
+    proof,
+    newNote: newNoteValue
+      ? {
+          value: newNoteValue,
+          secret: newNoteSecret,
+          nullifier: newNoteNullifier,
+          commitment: poseidon3([
+            newNoteValue,
+            newNoteSecret,
+            newNoteNullifier,
+          ]),
+          nullifierHash: poseidon1([newNoteNullifier]),
+        }
+      : null,
+  };
+};
+
+export const verifyProof = async (proof: ProofData) => {
+  const backend = new UltraHonkBackend(circuit.bytecode);
+
+  return await backend.verifyProof(proof);
 };

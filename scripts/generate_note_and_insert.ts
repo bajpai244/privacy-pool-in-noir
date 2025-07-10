@@ -10,7 +10,7 @@ const main = async () => {
   console.log("Inserting note into tree");
 
   tree.insert(note.commitment);
-  await storage.setLeaves(tree.leaves.map(leaf => leaf.toString()));
+  await storage.setLeaves(tree.leaves);
 
   console.log("tree root after insert", tree.root);
 
