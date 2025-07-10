@@ -43,6 +43,7 @@ const main = async () => {
       newCommitment.toString(16)
     );
   } else {
+    await storage.removeNote();
     console.log("no new commitment generated, complete amount withdrawn");
   }
 };
