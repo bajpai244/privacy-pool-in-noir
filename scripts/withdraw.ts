@@ -10,7 +10,7 @@ const main = async () => {
     throw new Error("Note not found");
   }
 
-  const { proof, newNote } = await generateProof(note, tree);
+  const { proof, newNote } = await generateProof(note, tree, 10);
 
   const [value, nullifierHash, newCommitment] = proof.publicInputs.map(v => {
     return BigInt(v);
@@ -42,6 +42,9 @@ const main = async () => {
       "new commitment inserted into tree: ",
       newCommitment.toString(16)
     );
+
+    await storage.setNote(newNote);
+    console.log("new note saved to storage: ", newNote);
   } else {
     await storage.removeNote();
     console.log("no new commitment generated, complete amount withdrawn");
