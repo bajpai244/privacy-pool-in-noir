@@ -13,7 +13,7 @@
   "scripts": {
     "prove": "bb prove -b ./target/privacy_pool.json -w ./target/privacy_pool.gz -o ./target",
     "fmt": "bunx prettier --write \"**/*.ts\"",
-    "init-tree": "bun run scripts/init_tree.ts",
+    "init": "bun run scripts/init.ts",
     "deposit": "bun run scripts/deposit.ts",
     "withdraw": "bun run scripts/withdraw.ts",
     "get-latest-note": "bun run scripts/get_latest_note.ts",
