@@ -57,6 +57,10 @@ export class Storage {
     };
   }
 
+  async removeNote() {
+    await this.storage.removeItem("note");
+  }
+
   async insertNullifierHash(nullifierHash: bigint) {
     await this.storage.setItem(
       `nulliferHashMap:${nullifierHash.toString()}`,
