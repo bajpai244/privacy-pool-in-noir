@@ -17,6 +17,7 @@ export const generateProof = async (
   tree: IMT,
   value?: number
 ): Promise<{ proof: ProofData; newNote: Note | null }> => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const noir = new Noir(circuit as any);
   const backend = new UltraHonkBackend(circuit.bytecode);
 

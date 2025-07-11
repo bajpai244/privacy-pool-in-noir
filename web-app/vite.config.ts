@@ -7,8 +7,44 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   optimizeDeps: {
-    esbuildOptions: { target: "esnext" },
-    exclude: ['@noir-lang/noirc_abi', '@noir-lang/acvm_js']
+    esbuildOptions: { 
+      target: "es2022",
+      supported: {
+        bigint: true,
+        'top-level-await': true
+      }
+    },
+    exclude: ['@noir-lang/noirc_abi', '@noir-lang/acvm_js', '@aztec/bb.js'],
+    // Force include lighter dependencies
+    include: ['poseidon-lite', '@zk-kit/imt']
+  },
+  build: {
+    // Disable source maps to avoid magic-string issues
+    sourcemap: false,
+    // Increase chunk size warnings threshold
+    chunkSizeWarningLimit: 3000,
+    // Target newer environments that support top-level await and large dependencies
+    target: ['chrome89', 'edge89', 'firefox89', 'safari15'],
+    // Optimize chunking for large dependencies
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          // Skip problematic files entirely
+          if (id.includes('@aztec/bb.js')) {
+            return undefined;
+          }
+          if (id.includes('@noir-lang/noir_js')) {
+            return 'noir-js';
+          }
+          if (id.includes('poseidon-lite') || id.includes('@zk-kit/imt')) {
+            return 'crypto-libs';
+          }
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        }
+      }
+    }
   },
   server: {
     host: "::",
