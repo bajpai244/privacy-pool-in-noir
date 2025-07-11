@@ -7,6 +7,7 @@ import { DollarSign, TrendingUp, TrendingDown, Clock, Monitor } from 'lucide-rea
 import { LocalStorage } from '@/lib/storage';
 import type { Note, IMTNode } from '@/lib/types';
 import { debugStorage } from '@/lib/debug';
+import { generateProof} from "../lib/utils"
 
 interface Transaction {
   id: string;
@@ -93,7 +94,7 @@ const BankingInterface = () => {
   }, []);
 
   const handleDeposit = async () => {
-    const depositAmount = parseFloat(amount);
+    const depositAmount = parseInt(amount);
     if (depositAmount > 0 && depositAmount <= accountBalance) {
       try {
         // Generate a new note for the deposit
@@ -147,8 +148,21 @@ const BankingInterface = () => {
   };
 
   const handleWithdrawal = async () => {
-    const withdrawAmount = parseFloat(amount);
+    const withdrawAmount = parseInt(amount);
+
+    if(withdrawAmount > currentNote.value) {
+      alert("Withdrawal amount exceeds current note value");
+      return;
+    }
+
     if (withdrawAmount > 0 && withdrawAmount <= poolBalance) {
+
+      const tree = await storage.getTree();
+
+      console.log('started proof generation....');
+      const { proof, newNote } = await generateProof(currentNote, tree, withdrawAmount);
+      console.log("proof", proof);
+
       const newPoolBalance = poolBalance - withdrawAmount;
       const newAccountBalance = accountBalance + withdrawAmount;
       
@@ -160,7 +174,21 @@ const BankingInterface = () => {
         accountBalance: newAccountBalance,
         poolBalance: newPoolBalance
       });
-      
+
+      if(newNote) {
+        await storage.setNote(newNote);
+        setCurrentNote(newNote);
+
+        tree.insert(newNote.commitment);
+        setTreeRoot(tree.root.toString());
+
+        await storage.setLeaves(tree.leaves);
+      }
+      else {
+        await storage.removeNote();
+        setCurrentNote(null); 
+      }
+
       // Validate the state after withdrawal
       const isValid = await storage.validateAllData();
       if (!isValid) {
@@ -259,7 +287,7 @@ const BankingInterface = () => {
           </div>
         </Card>
 
-        {/* Pool Balance */}
+        {/*  */}
         <Card className="retro-card">
           <div className="flex items-center justify-between mb-4">
             <h2 className="terminal-text text-xl font-bold text-primary">POOL BALANCE</h2>

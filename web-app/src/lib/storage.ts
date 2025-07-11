@@ -138,7 +138,7 @@ export class LocalStorage {
       // Check if balances make sense
       // If there's a note, pool balance should be at least the note value
       if (note && balances.poolBalance < note.value) {
-        console.error('Pool balance is less than note value:', {
+        console.error('less than note value:', {
           poolBalance: balances.poolBalance,
           noteValue: note.value
         });
