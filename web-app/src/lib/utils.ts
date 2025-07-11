@@ -3,7 +3,7 @@ import { Noir } from "@noir-lang/noir_js";
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
-import circuit from "../../target/privacy_pool.json";
+import circuit from "../../circuit/privacy_pool.json"
 import { Note } from "./types";
 import { IMT } from "@zk-kit/imt";
 import { poseidon1, poseidon3 } from "poseidon-lite";
