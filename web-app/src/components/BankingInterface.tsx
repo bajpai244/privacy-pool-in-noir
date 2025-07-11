@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { DollarSign, TrendingUp, TrendingDown, Clock, Monitor } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Clock, Monitor, Loader2 } from 'lucide-react';
 import { LocalStorage } from '@/lib/storage';
 import type { Note, IMTNode } from '@/lib/types';
 import { debugStorage } from '@/lib/debug';
@@ -29,6 +29,7 @@ const BankingInterface = () => {
   const [currentNote, setCurrentNote] = useState<Note | null>(null);
   const [treeRoot, setTreeRoot] = useState<string>('');
   const [wasReinitialized, setWasReinitialized] = useState<boolean>(false);
+  const [isWithdrawing, setIsWithdrawing] = useState<boolean>(false);
 
   // Initialize storage and load existing data with validation
   useEffect(() => {
@@ -156,55 +157,63 @@ const BankingInterface = () => {
     }
 
     if (withdrawAmount > 0 && withdrawAmount <= poolBalance) {
+      try {
+        setIsWithdrawing(true);
+        
+        const tree = await storage.getTree();
 
-      const tree = await storage.getTree();
+        console.log('started proof generation....');
+        const { proof, newNote } = await generateProof(currentNote, tree, withdrawAmount);
+        console.log("proof", proof);
 
-      console.log('started proof generation....');
-      const { proof, newNote } = await generateProof(currentNote, tree, withdrawAmount);
-      console.log("proof", proof);
+        const newPoolBalance = poolBalance - withdrawAmount;
+        const newAccountBalance = accountBalance + withdrawAmount;
+        
+        setPoolBalance(newPoolBalance);
+        setAccountBalance(newAccountBalance);
+        
+        // Save to localStorage
+        await storage.setBalances({
+          accountBalance: newAccountBalance,
+          poolBalance: newPoolBalance
+        });
 
-      const newPoolBalance = poolBalance - withdrawAmount;
-      const newAccountBalance = accountBalance + withdrawAmount;
-      
-      setPoolBalance(newPoolBalance);
-      setAccountBalance(newAccountBalance);
-      
-      // Save to localStorage
-      await storage.setBalances({
-        accountBalance: newAccountBalance,
-        poolBalance: newPoolBalance
-      });
+        if(newNote) {
+          await storage.setNote(newNote);
+          setCurrentNote(newNote);
 
-      if(newNote) {
-        await storage.setNote(newNote);
-        setCurrentNote(newNote);
+          tree.insert(newNote.commitment);
+          setTreeRoot(tree.root.toString());
 
-        tree.insert(newNote.commitment);
-        setTreeRoot(tree.root.toString());
+          await storage.setLeaves(tree.leaves);
+        }
+        else {
+          await storage.removeNote();
+          setCurrentNote(null); 
+        }
 
-        await storage.setLeaves(tree.leaves);
+        // Validate the state after withdrawal
+        const isValid = await storage.validateAllData();
+        if (!isValid) {
+          console.error('Data validation failed after withdrawal. This should not happen.');
+          alert('Warning: Data inconsistency detected after withdrawal. Please refresh the page.');
+        }
+        
+        const newTransaction: Transaction = {
+          id: Date.now().toString(),
+          type: 'withdrawal',
+          amount: withdrawAmount,
+          date: new Date(),
+          description: `Withdrawal from pool`
+        };
+        setTransactions(prev => [newTransaction, ...prev]);
+        setAmount('');
+      } catch (error) {
+        console.error('Error during withdrawal:', error);
+        alert('Error during withdrawal. Please try again.');
+      } finally {
+        setIsWithdrawing(false);
       }
-      else {
-        await storage.removeNote();
-        setCurrentNote(null); 
-      }
-
-      // Validate the state after withdrawal
-      const isValid = await storage.validateAllData();
-      if (!isValid) {
-        console.error('Data validation failed after withdrawal. This should not happen.');
-        alert('Warning: Data inconsistency detected after withdrawal. Please refresh the page.');
-      }
-      
-      const newTransaction: Transaction = {
-        id: Date.now().toString(),
-        type: 'withdrawal',
-        amount: withdrawAmount,
-        date: new Date(),
-        description: `Withdrawal from pool`
-      };
-      setTransactions(prev => [newTransaction, ...prev]);
-      setAmount('');
     }
   };
 
@@ -336,14 +345,23 @@ const BankingInterface = () => {
               
               <Button
                 onClick={handleWithdrawal}
-                disabled={!amount || parseFloat(amount) <= 0 || parseFloat(amount) > poolBalance}
+                disabled={!amount || parseFloat(amount) <= 0 || parseFloat(amount) > poolBalance || isWithdrawing}
                 className="retro-button bg-destructive hover:bg-destructive/90 border-destructive"
                 style={{ 
                   boxShadow: '4px 4px 0px hsl(var(--destructive))',
                 }}
               >
-                <TrendingDown className="mr-2" size={20} />
-                WITHDRAW
+                {isWithdrawing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    GENERATING PROOF...
+                  </>
+                ) : (
+                  <>
+                    <TrendingDown className="mr-2" size={20} />
+                    WITHDRAW
+                  </>
+                )}
               </Button>
             </div>
           </div>
