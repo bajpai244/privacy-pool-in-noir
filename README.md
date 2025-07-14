@@ -177,6 +177,16 @@ This is a demonstration project (v0.1) showcasing privacy pool concepts using No
 
 **This code is experimental and unaudited. It is intended for educational and research purposes only. Do not use this code in production environments or with real funds. The implementation may contain bugs, security vulnerabilities, or other issues that could result in loss of funds or privacy breaches.**
 
+## Credits
+
+This project builds upon the excellent work of several teams and projects:
+
+- **[0xbow.io](https://0xbow.io)** - For inspiration on the random withdraw logic design
+- **[Privacy Scaling Explorations (PSE)](https://github.com/privacy-scaling-explorations)** - For the invaluable ZK-Kit libraries:
+  - [zk-kit.noir](https://github.com/privacy-scaling-explorations/zk-kit.noir) - Reusable Noir circuits including binary Merkle tree implementations
+  - [zk-kit](https://github.com/privacy-scaling-explorations/zk-kit) - Comprehensive zero-knowledge libraries and utilities
+- **[Noir Team](https://noir-lang.org/)** - For creating the amazing Noir language that makes zero-knowledge circuit development accessible and powerful
+
 ---
 
 *Privacy Pool - Secure, Private, Decentralized*
