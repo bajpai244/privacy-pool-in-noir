@@ -339,7 +339,7 @@ const BankingInterface = () => {
             <div className="grid grid-cols-2 gap-4">
               <Button
                 onClick={handleDeposit}
-                disabled={!amount || parseFloat(amount) <= 0 || parseFloat(amount) > accountBalance}
+                disabled={!amount || parseFloat(amount) <= 0 || parseFloat(amount) > accountBalance || (currentNote && currentNote.value > 0)}
                 className="retro-button bg-primary hover:bg-primary/90"
               >
                 <TrendingUp className="mr-2" size={20} />
@@ -367,6 +367,19 @@ const BankingInterface = () => {
                 )}
               </Button>
             </div>
+            
+            {/* Status Message */}
+            {currentNote && currentNote.value > 0 && (
+              <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded">
+                <div className="terminal-text text-sm text-yellow-400">
+                  ⚠️ ACTIVE NOTE DETECTED
+                </div>
+                <div className="terminal-text text-xs text-yellow-300 mt-1">
+                  You have an active note worth ${currentNote.value}. 
+                  Consume this note fully before making another deposit.
+                </div>
+              </div>
+            )}
           </div>
         </Card>
       </div>
