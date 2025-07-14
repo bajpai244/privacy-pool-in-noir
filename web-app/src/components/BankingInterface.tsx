@@ -281,7 +281,8 @@ const BankingInterface = () => {
 
       </div>
 
-      <div className="max-w-6xl mx-auto grid gap-6 grid-cols-1 lg:grid-cols-3">
+      {/* Balance Cards */}
+      <div className="max-w-6xl mx-auto grid gap-6 grid-cols-1 lg:grid-cols-2 mb-8">
         {/* Account Balance */}
         <Card className="retro-card">
           <div className="flex items-center justify-between mb-4">
@@ -296,7 +297,7 @@ const BankingInterface = () => {
           </div>
         </Card>
 
-        {/*  */}
+        {/* Pool Balance */}
         <Card className="retro-card">
           <div className="flex items-center justify-between mb-4">
             <h2 className="terminal-text text-xl font-bold text-primary">POOL BALANCE</h2>
@@ -309,8 +310,10 @@ const BankingInterface = () => {
             Pool Funds
           </div>
         </Card>
+      </div>
 
-        {/* Transaction Interface */}
+      {/* Transaction Terminal - Own Horizontal Space */}
+      <div className="max-w-4xl mx-auto mb-8">
         <Card className="retro-card">
           <div className="flex items-center justify-between mb-6">
             <h2 className="terminal-text text-xl font-bold text-primary">TRANSACTION TERMINAL</h2>
@@ -366,8 +369,10 @@ const BankingInterface = () => {
             </div>
           </div>
         </Card>
+      </div>
 
-        {/* Transaction History */}
+      {/* Transaction History */}
+      <div className="max-w-6xl mx-auto">
         <Card className="retro-card col-span-full">
           <div className="flex items-center justify-between mb-6">
             <h2 className="terminal-text text-xl font-bold text-primary">TRANSACTION HISTORY</h2>
