@@ -48,7 +48,7 @@ const BankingInterface = () => {
           // Show a brief notification that system was reset
           setTerminalText('SYSTEM RESET - DATA INCONSISTENCIES DETECTED');
           setTimeout(() => {
-            setTerminalText('NOIR-PRIVACY-POOL TERMINAL v2.1 READY...');
+            setTerminalText('NOIR-PRIVACY-POOL TERMINAL v0.1 READY...');
           }, 2000);
         }
         
@@ -84,7 +84,7 @@ const BankingInterface = () => {
   }, []);
 
   useEffect(() => {
-    const text = 'NOIR-PRIVACY-POOL TERMINAL v2.1 READY...';
+    const text = 'NOIR-PRIVACY-POOL TERMINAL v0.1 READY...';
     let i = 0;
     const typeWriter = () => {
       if (i < text.length) {
