@@ -2,6 +2,8 @@
 
 A privacy-preserving mixing pool implementation using Noir zero-knowledge proofs. This project allows users to deposit and withdraw funds while maintaining transaction privacy through cryptographic commitments and Merkle tree proofs.
 
+<img src="./web-app/public/image.png" width="700px">
+
 ## How It Works
 
 Privacy Pool operates on the principle of **commitment schemes** and **zero-knowledge proofs** to break the link between deposits and withdrawals:
