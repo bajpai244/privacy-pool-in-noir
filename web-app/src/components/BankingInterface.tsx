@@ -8,6 +8,7 @@ import { LocalStorage } from '@/lib/storage';
 import type { Note, IMTNode } from '@/lib/types';
 import { debugStorage } from '@/lib/debug';
 import { generateProof} from "../lib/utils"
+import { useToast } from '@/hooks/use-toast';
 
 interface Transaction {
   id: string;
@@ -30,6 +31,7 @@ const BankingInterface = () => {
   const [treeRoot, setTreeRoot] = useState<string>('');
   const [wasReinitialized, setWasReinitialized] = useState<boolean>(false);
   const [isWithdrawing, setIsWithdrawing] = useState<boolean>(false);
+  const { toast } = useToast();
 
   // Initialize storage and load existing data with validation
   useEffect(() => {
@@ -142,6 +144,10 @@ const BankingInterface = () => {
         setAmount('');
         
         console.log('Deposit completed successfully');
+        toast({
+          title: 'Deposit Successful',
+          description: `Deposited ${formatCurrency(depositAmount)} to the pool.`,
+        });
       } catch (error) {
         console.error('Error during deposit:', error);
       }
@@ -208,6 +214,10 @@ const BankingInterface = () => {
         };
         setTransactions(prev => [newTransaction, ...prev]);
         setAmount('');
+        toast({
+          title: 'Withdrawal Successful',
+          description: `Withdrew ${formatCurrency(withdrawAmount)} from the pool.`,
+        });
       } catch (error) {
         console.error('Error during withdrawal:', error);
         alert('Error during withdrawal. Please try again.');
