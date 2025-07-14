@@ -37,3 +37,5 @@ target
 
 # db, in memory key-value store directory used by unstorage
 db
+
+.vercel
