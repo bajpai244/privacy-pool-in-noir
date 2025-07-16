@@ -1,9 +1,9 @@
 export type Note = {
-  value: number;
-  secret: number;
-  nullifier: number;
+  value: bigint;
+  secret: bigint;
+  nullifier: bigint;
   // hash of [value, secret]
-  commitment: bigint;
+  commitment: Uint32Array<ArrayBufferLike>;
   // hash of [commitment, nullifier]
-  nullifierHash: bigint;
+  nullifierHash: Uint32Array<ArrayBufferLike>;
 };

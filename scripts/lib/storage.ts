@@ -3,6 +3,7 @@ import { createStorage } from "unstorage";
 import fsDriver from "unstorage/drivers/fs";
 import type { Note } from "../types";
 import { poseidon1, poseidon3 } from "poseidon-lite";
+import { calculateCommitment, calculateNullifierHash } from "./utils";
 
 export class Storage {
   private storage: ReturnType<typeof createStorage>;
@@ -30,28 +31,34 @@ export class Storage {
 
   async setNote(note: Note) {
     await this.storage.setItem("note", {
-      value: note.value,
-      secret: note.secret,
-      nullifier: note.nullifier,
+      value: note.value.toString(),
+      secret: note.secret.toString(),
+      nullifier: note.nullifier.toString(),
     });
   }
 
   async getNote(): Promise<Note | null> {
     const note = await this.storage.getItem<{
-      value: number;
-      secret: number;
-      nullifier: number;
+      value: string;
+      secret: string;
+      nullifier: string;
     }>("note");
 
     if (!note) {
       return null;
     }
 
-    const commitment = poseidon3([note.value, note.secret, note.nullifier]);
-    const nullifierHash = poseidon1([note.nullifier]);
+    const commitment = calculateCommitment(
+      BigInt(note.value),
+      BigInt(note.secret),
+      BigInt(note.nullifier)
+    );
+    const nullifierHash = calculateNullifierHash(BigInt(note.nullifier));
 
     return {
-      ...note,
+      value: BigInt(note.value),
+      secret: BigInt(note.secret),
+      nullifier: BigInt(note.nullifier),
       commitment,
       nullifierHash,
     };

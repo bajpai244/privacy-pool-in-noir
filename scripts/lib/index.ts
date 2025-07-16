@@ -6,6 +6,16 @@ import type { Note } from "../types";
 import { Noir } from "@noir-lang/noir_js";
 import { UltraHonkBackend, type ProofData } from "@aztec/bb.js";
 import circuit from "../../target/privacy_pool.json";
+import {
+  bigIntArrayToUint32Array,
+  calculateCommitment,
+  calculateNullifierHash,
+  sha256Compression,
+  sha256ImtVersion,
+  u256FromU32ArrayBE,
+  u256ToArrayBE,
+  u256ToU32ArrayBE,
+} from "./utils";
 
 export * from "./constants";
 export * from "./utils";
@@ -21,7 +31,7 @@ export const getTreeAndStorage = async () => {
   }
 
   const tree = new IMT(
-    poseidon2,
+    sha256ImtVersion,
     TREE_DEPTH,
     TREE_ZERO_VALUE,
     TREE_ARITY,
@@ -32,12 +42,12 @@ export const getTreeAndStorage = async () => {
 };
 
 // NOTE: in production, we should use a secure random number generator
-export const generateNote = (value: number) => {
-  const secret = generateRandomInt();
-  const nullifier = generateRandomInt();
+export const generateNote = (value: bigint) => {
+  const secret = generateRandomIntBigInt();
+  const nullifier = generateRandomIntBigInt();
 
-  const commitment = poseidon3([value, secret, nullifier]);
-  const nullifierHash = poseidon1([nullifier]);
+  const commitment = calculateCommitment(value, secret, nullifier);
+  const nullifierHash = calculateNullifierHash(nullifier);
 
   return {
     value,
@@ -59,36 +69,66 @@ export const generateRandomIntBigInt = () => {
 export const generateProof = async (
   note: Note,
   tree: IMT,
-  value?: number
+  value?: bigint
 ): Promise<{ proof: ProofData; newNote: Note | null }> => {
   const noir = new Noir(circuit as any);
   const backend = new UltraHonkBackend(circuit.bytecode);
 
-  const noteCommitmentIndex = tree.indexOf(note.commitment);
+  const noteCommitmentIndex = tree.indexOf(u256FromU32ArrayBE(note.commitment));
   const merkleProof = tree.createProof(noteCommitmentIndex);
 
   const withdrawAmount = value ? value : note.value;
 
   const newNoteValue = note.value - withdrawAmount;
-  const newNoteSecret = generateRandomInt();
-  const newNoteNullifier = generateRandomInt();
+  const newNoteSecret = generateRandomIntBigInt();
+  const newNoteNullifier = generateRandomIntBigInt();
 
-  const { witness } = await noir.execute({
-    value: note.value,
-    secret: note.secret,
-    nullifier: note.nullifier,
-    new_secret: newNoteSecret,
-    new_nullifier: newNoteNullifier,
-    withdrawAmount: withdrawAmount,
+  const { witness, returnValue } = await noir.execute({
+    value: u256ToArrayBE(note.value).map(v => v.toString()),
+    secret: u256ToArrayBE(note.secret).map(v => v.toString()),
+    nullifier: u256ToArrayBE(note.nullifier).map(v => v.toString()),
+    new_secret: u256ToArrayBE(newNoteSecret).map(v => v.toString()),
+    new_nullifier: u256ToArrayBE(newNoteNullifier).map(v => v.toString()),
+    new_amount: u256ToArrayBE(newNoteValue).map(v => v.toString()),
+    withdrawAmount: withdrawAmount.toString(),
     merkle_proof_length: merkleProof.siblings.length,
     merkle_proof_indices: merkleProof.pathIndices,
     merkle_proof_siblings: merkleProof.siblings.map(v => {
-      return v.toString();
+      const ele = v[0];
+      const eleU32Array = u256ToArrayBE(BigInt(ele));
+
+      return eleU32Array.map(e => e.toString());
     }),
-    merkle_root: tree.root.toString(),
+        merkle_root: u256ToArrayBE(BigInt(tree.root)).map(v => v.toString()),
   });
 
+  // console.log("circuit inputs:", {
+  //   value: u256ToArrayBE(note.value).map(v => v.toString()),
+  //   secret: u256ToArrayBE(note.secret).map(v => v.toString()),
+  //   nullifier: u256ToArrayBE(note.nullifier).map(v => v.toString()),
+  //   new_secret: u256ToArrayBE(newNoteSecret).map(v => v.toString()),
+  //   new_nullifier: u256ToArrayBE(newNoteNullifier).map(v => v.toString()),
+  //    new_amount: u256ToArrayBE(newNoteValue).map(v => v.toString()),
+  //   withdrawAmount: withdrawAmount.toString(),
+  //   merkle_proof_length: merkleProof.siblings.length,
+  //   merkle_proof_indices: merkleProof.pathIndices,
+  //   merkle_proof_siblings: merkleProof.siblings.map(v => {
+  //     const ele = v[0];
+  //     const eleU32Array = u256ToArrayBE(BigInt(ele));
+
+  //     return eleU32Array.map(e => e.toString());
+  //   }),
+  //   merkle_root: u256ToArrayBE(BigInt(tree.root)).map(v => v.toString()),
+  // });
+
+  // console.log("return value:", returnValue);
+
   const proof = await backend.generateProof(witness);
+
+  console.log("expected merkle root", tree.root);
+  console.log("expected nullifier", u256FromU32ArrayBE(calculateNullifierHash(note.nullifier)));
+  console.log("expected commitment", u256FromU32ArrayBE(calculateCommitment(newNoteValue, newNoteSecret, newNoteNullifier)));
+
 
   return {
     proof,
