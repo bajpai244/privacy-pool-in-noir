@@ -14,4 +14,4 @@ export type Note = {
 export type BalanceData = {
   accountBalance: number;
   poolBalance: number;
-}; 
+};

@@ -5,6 +5,7 @@
       "name": "privacy_pool",
       "dependencies": {
         "@aztec/bb.js": "^0.87.9",
+        "@aztec/noir-acvm_js": "^0.87.9",
         "@noir-lang/noir_js": "^1.0.0-beta.7",
         "@zk-kit/imt": "^2.0.0-beta.8",
         "poseidon-lite": "^0.3.0",
@@ -21,6 +22,8 @@
   },
   "packages": {
     "@aztec/bb.js": ["@aztec/bb.js@0.87.9", "", { "dependencies": { "comlink": "^4.4.1", "commander": "^12.1.0", "idb-keyval": "^6.2.1", "msgpackr": "^1.11.2", "pako": "^2.1.0", "pino": "^9.5.0", "tslib": "^2.4.0" }, "bin": { "bb.js": "dest/node/main.js" } }, "sha512-opLGrEPszWL3YBiWgyGaBZrrN0ZOgPcnkh5G5uduLhvV7WUBGGxhosMhh3aw/Iiyn9gKnKPwpVYWr/+VlTCJ0g=="],
+
+    "@aztec/noir-acvm_js": ["@aztec/noir-acvm_js@0.87.9", "", {}, "sha512-aoWgNMMEHKU4fpn6+OGigUyaOqp8UyfNMlB2hz0g1AeOZ6hVq036v7nQv1McVxXOxcVzdD7Dpf1nG/eUABCpKg=="],
 
     "@msgpackr-extract/msgpackr-extract-darwin-arm64": ["@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.3", "", { "os": "darwin", "cpu": "arm64" }, "sha512-QZHtlVgbAdy2zAqNA9Gu1UpIuI8Xvsd1v8ic6B2pZmeFnFcMWiPLfWXh7TVw4eGEZ/C9TH281KwhVoeQUKbyjw=="],
 

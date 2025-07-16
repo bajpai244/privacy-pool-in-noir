@@ -8,6 +8,7 @@ import { UltraHonkBackend, type ProofData } from "@aztec/bb.js";
 import circuit from "../../target/privacy_pool.json";
 
 export * from "./constants";
+export * from "./utils";
 
 export const getTreeAndStorage = async () => {
   const storage = new Storage(DB_PATH);
@@ -49,6 +50,10 @@ export const generateNote = (value: number) => {
 
 export const generateRandomInt = () => {
   return Math.floor(Math.random() * 1000000);
+};
+
+export const generateRandomIntBigInt = () => {
+  return BigInt(generateRandomInt());
 };
 
 export const generateProof = async (
