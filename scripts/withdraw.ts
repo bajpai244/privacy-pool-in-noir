@@ -1,5 +1,10 @@
 import { Noir } from "@noir-lang/noir_js";
-import { generateProof, getTreeAndStorage, verifyProof } from "./lib";
+import {
+  generateProof,
+  getTreeAndStorage,
+  u256FromArrayBE,
+  verifyProof,
+} from "./lib";
 import { Barretenberg } from "@aztec/bb.js";
 
 const main = async () => {
@@ -10,11 +15,18 @@ const main = async () => {
     throw new Error("Note not found");
   }
 
-  const { proof, newNote } = await generateProof(note, tree, 10);
+  const { proof, newNote } = await generateProof(note, tree, 10n);
 
-  const [value, nullifierHash, newCommitment] = proof.publicInputs.map(v => {
-    return BigInt(v);
-  });
+  const withdrawAmount = proof.publicInputs[0];
+  const merkleRoot = u256FromArrayBE(
+    proof.publicInputs.slice(1, 9).map(v => BigInt(v))
+  );
+  const nullifierHash = u256FromArrayBE(
+    proof.publicInputs.slice(9, 17).map(v => BigInt(v))
+  );
+  const newCommitment = u256FromArrayBE(
+    proof.publicInputs.slice(17, 25).map(v => BigInt(v))
+  );
 
   const proofVerification = await verifyProof(proof);
   if (!proofVerification) {
@@ -29,7 +41,7 @@ const main = async () => {
   await storage.insertNullifierHash(nullifierHash);
   console.log("Inserted nullifier hash into storage");
 
-  console.log("withdrawal processed successfully for amount: ", value);
+  console.log("withdrawal processed successfully for amount: ", withdrawAmount);
 
   if (newNote) {
     console.log("inserting new commitment into tree");
