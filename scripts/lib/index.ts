@@ -99,7 +99,7 @@ export const generateProof = async (
 
       return eleU32Array.map(e => e.toString());
     }),
-        merkle_root: u256ToArrayBE(BigInt(tree.root)).map(v => v.toString()),
+    merkle_root: u256ToArrayBE(BigInt(tree.root)).map(v => v.toString()),
   });
 
   // console.log("circuit inputs:", {
@@ -125,10 +125,17 @@ export const generateProof = async (
 
   const proof = await backend.generateProof(witness);
 
-  console.log("expected merkle root", tree.root);
-  console.log("expected nullifier", u256FromU32ArrayBE(calculateNullifierHash(note.nullifier)));
-  console.log("expected commitment", u256FromU32ArrayBE(calculateCommitment(newNoteValue, newNoteSecret, newNoteNullifier)));
-
+  // console.log("expected merkle root", tree.root);
+  // console.log(
+  //   "expected nullifier",
+  //   u256FromU32ArrayBE(calculateNullifierHash(note.nullifier))
+  // );
+  // console.log(
+  //   "expected commitment",
+  //   u256FromU32ArrayBE(
+  //     calculateCommitment(newNoteValue, newNoteSecret, newNoteNullifier)
+  //   )
+  // );
 
   return {
     proof,
@@ -137,12 +144,12 @@ export const generateProof = async (
           value: newNoteValue,
           secret: newNoteSecret,
           nullifier: newNoteNullifier,
-          commitment: poseidon3([
+          commitment: calculateCommitment(
             newNoteValue,
             newNoteSecret,
-            newNoteNullifier,
-          ]),
-          nullifierHash: poseidon1([newNoteNullifier]),
+            newNoteNullifier
+          ),
+          nullifierHash: calculateNullifierHash(newNoteNullifier),
         }
       : null,
   };
