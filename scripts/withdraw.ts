@@ -1,11 +1,9 @@
-import { Noir } from "@noir-lang/noir_js";
 import {
   generateProof,
   getTreeAndStorage,
   u256FromArrayBE,
   verifyProof,
 } from "./lib";
-import { Barretenberg } from "@aztec/bb.js";
 
 const main = async () => {
   const { storage, tree } = await getTreeAndStorage();
