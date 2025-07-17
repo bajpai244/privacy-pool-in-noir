@@ -5,18 +5,25 @@ import "./SHA256Lib.sol";
 
 /**
  * @title MerkleTreeLib
- * @dev Library for Merkle tree operations matching the IMT functionality
+ * @dev Library for Merkle tree operations with historical root tracking
  */
 library MerkleTreeLib {
     using SHA256Lib for uint256;
+
+    // Constants for history tracking
+    uint256 constant HISTORY_SIZE = 100;
 
     struct MerkleTree {
         uint256 depth;
         uint256 zeroValue;
         uint256 leafCount;
         mapping(uint256 => uint256) leaves;
-        mapping(uint256 => mapping(uint256 => uint256)) nodes;
         mapping(uint256 => bool) leafExists;
+        
+        // History tracking
+        uint256[HISTORY_SIZE] rootHistory;
+        uint256 currentHistoryIndex;
+        mapping(uint256 => bool) isValidHistoricalRoot;
     }
 
     /**
@@ -33,13 +40,46 @@ library MerkleTreeLib {
         tree.depth = _depth;
         tree.zeroValue = _zeroValue;
         tree.leafCount = 0;
+        tree.currentHistoryIndex = 0;
         
-        // Initialize zero values for each level
-        uint256 currentZero = _zeroValue;
-        for (uint256 i = 0; i < _depth; i++) {
-            tree.nodes[i][0] = currentZero;
-            currentZero = SHA256Lib.sha256Hash(currentZero, currentZero);
+        // Initialize root history with initial root (empty tree root)
+        uint256 initialRoot = calculateEmptyTreeRoot(_zeroValue, _depth);
+        tree.rootHistory[0] = initialRoot;
+        tree.isValidHistoricalRoot[initialRoot] = true;
+    }
+
+    /**
+     * @dev Calculates the root of an empty tree
+     * @param zeroValue The zero value for empty nodes
+     * @param depth The depth of the tree
+     * @return The root hash of an empty tree
+     */
+    function calculateEmptyTreeRoot(uint256 zeroValue, uint256 depth) internal pure returns (uint256) {
+        uint256 currentHash = zeroValue;
+        for (uint256 i = 0; i < depth; i++) {
+            currentHash = SHA256Lib.sha256Hash(currentHash, currentHash);
         }
+        return currentHash;
+    }
+
+    /**
+     * @dev Updates the root history when a new root is calculated
+     * @param tree The tree storage struct
+     * @param newRoot The new root to add to history
+     */
+    function updateRootHistory(MerkleTree storage tree, uint256 newRoot) internal {
+        // Move to next history slot
+        tree.currentHistoryIndex = (tree.currentHistoryIndex + 1) % HISTORY_SIZE;
+        
+        // Remove old root from valid mapping if it exists
+        uint256 oldRoot = tree.rootHistory[tree.currentHistoryIndex];
+        if (oldRoot != 0) {
+            tree.isValidHistoricalRoot[oldRoot] = false;
+        }
+        
+        // Add new root to history
+        tree.rootHistory[tree.currentHistoryIndex] = newRoot;
+        tree.isValidHistoricalRoot[newRoot] = true;
     }
 
     /**
@@ -56,32 +96,11 @@ library MerkleTreeLib {
         tree.leafExists[leaf] = true;
         tree.leafCount++;
 
-        // Update the tree from bottom to top
-        uint256 currentIndex = index;
-        uint256 currentValue = leaf;
-
-        for (uint256 level = 0; level < tree.depth; level++) {
-            tree.nodes[level][currentIndex] = currentValue;
-            
-            // Calculate parent
-            uint256 parentIndex = currentIndex / 2;
-            uint256 siblingIndex = currentIndex % 2 == 0 ? currentIndex + 1 : currentIndex - 1;
-            
-            uint256 siblingValue;
-            if (siblingIndex < (1 << (tree.depth - level))) {
-                siblingValue = tree.nodes[level][siblingIndex];
-            } else {
-                siblingValue = tree.zeroValue;
-            }
-
-            if (currentIndex % 2 == 0) {
-                currentValue = SHA256Lib.sha256Hash(currentValue, siblingValue);
-            } else {
-                currentValue = SHA256Lib.sha256Hash(siblingValue, currentValue);
-            }
-
-            currentIndex = parentIndex;
-        }
+        // Calculate the new root after insertion
+        uint256 newRoot = calculateCurrentRoot(tree);
+        
+        // Update root history with new root
+        updateRootHistory(tree, newRoot);
     }
 
     /**
@@ -91,15 +110,52 @@ library MerkleTreeLib {
      */
     function getRoot(MerkleTree storage tree) internal view returns (uint256) {
         if (tree.leafCount == 0) {
-            return tree.zeroValue;
+            return calculateEmptyTreeRoot(tree.zeroValue, tree.depth);
         }
         
-        // Build the root from the current leaves
-        uint256 currentLevel = tree.depth - 1;
-        uint256 maxIndex = (tree.leafCount - 1) / (1 << currentLevel);
-        
-        return tree.nodes[currentLevel][maxIndex];
+        // Calculate the current root from the tree structure
+        uint256 currentRoot = calculateCurrentRoot(tree);
+        return currentRoot;
     }
+
+    /**
+     * @dev Calculates the current root from the tree structure
+     * @param tree The tree storage struct
+     * @return The calculated root hash
+     */
+    function calculateCurrentRoot(MerkleTree storage tree) internal view returns (uint256) {
+        // If no leaves, return empty tree root
+        if (tree.leafCount == 0) {
+            return calculateEmptyTreeRoot(tree.zeroValue, tree.depth);
+        }
+        
+        // Build the tree level by level
+        uint256[] memory currentLevel = new uint256[](1 << tree.depth);
+        
+        // Fill the bottom level with leaves and zero values
+        for (uint256 i = 0; i < (1 << tree.depth); i++) {
+            if (i < tree.leafCount) {
+                currentLevel[i] = tree.leaves[i];
+            } else {
+                currentLevel[i] = tree.zeroValue;
+            }
+        }
+        
+        // Calculate each level up to the root
+        uint256 levelSize = 1 << tree.depth;
+        for (uint256 level = 0; level < tree.depth; level++) {
+            levelSize = levelSize / 2;
+            for (uint256 i = 0; i < levelSize; i++) {
+                currentLevel[i] = SHA256Lib.sha256Hash(
+                    currentLevel[i * 2],
+                    currentLevel[i * 2 + 1]
+                );
+            }
+        }
+        
+        return currentLevel[0];
+    }
+
 
     /**
      * @dev Checks if a leaf exists in the tree
@@ -159,5 +215,35 @@ library MerkleTreeLib {
         }
 
         return computedHash == root;
+    }
+
+    /**
+     * @dev Checks if a root is valid within the last 100 roots
+     * @param tree The tree storage struct
+     * @param root The root to check
+     * @return True if the root is valid and within history, false otherwise
+     */
+    function isValidHistoricalRoot(MerkleTree storage tree, uint256 root) internal view returns (bool) {
+        return tree.isValidHistoricalRoot[root];
+    }
+
+    /**
+     * @dev Gets the current root history index
+     * @param tree The tree storage struct
+     * @return The current history index
+     */
+    function getCurrentHistoryIndex(MerkleTree storage tree) internal view returns (uint256) {
+        return tree.currentHistoryIndex;
+    }
+
+    /**
+     * @dev Gets a specific root from history
+     * @param tree The tree storage struct
+     * @param index The history index to retrieve
+     * @return The root at the given history index
+     */
+    function getHistoricalRoot(MerkleTree storage tree, uint256 index) internal view returns (uint256) {
+        require(index < HISTORY_SIZE, "History index out of bounds");
+        return tree.rootHistory[index];
     }
 } 

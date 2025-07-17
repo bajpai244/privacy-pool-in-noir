@@ -113,8 +113,8 @@ contract PrivacyPool {
         // Check nullifier hasn't been used
         require(!nullifierHashExists[nullifierHash], "Nullifier already used");
         
-        // Check merkle root matches current tree
-        require(merkleRoot == merkleTree.getRoot(), "Invalid merkle root");
+        // Check merkle root is valid within the last 100 roots
+        require(MerkleTreeLib.isValidHistoricalRoot(merkleTree, merkleRoot), "Invalid or expired merkle root");
         
         // Mark nullifier as used
         nullifierHashExists[nullifierHash] = true;
@@ -138,6 +138,32 @@ contract PrivacyPool {
      */
     function getMerkleRoot() external view returns (uint256) {
         return merkleTree.getRoot();
+    }
+
+    /**
+     * @dev Checks if a merkle root is valid within the last 100 roots
+     * @param root The root to check
+     * @return True if the root is valid and within history, false otherwise
+     */
+    function isValidHistoricalRoot(uint256 root) external view returns (bool) {
+        return MerkleTreeLib.isValidHistoricalRoot(merkleTree, root);
+    }
+
+    /**
+     * @dev Gets the current root history index
+     * @return The current history index
+     */
+    function getCurrentHistoryIndex() external view returns (uint256) {
+        return MerkleTreeLib.getCurrentHistoryIndex(merkleTree);
+    }
+
+    /**
+     * @dev Gets a specific root from history
+     * @param index The history index to retrieve
+     * @return The root at the given history index
+     */
+    function getHistoricalRoot(uint256 index) external view returns (uint256) {
+        return MerkleTreeLib.getHistoricalRoot(merkleTree, index);
     }
 
     /**

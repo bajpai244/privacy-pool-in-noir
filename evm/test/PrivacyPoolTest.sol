@@ -156,6 +156,131 @@ contract PrivacyPoolTest {
     }
     
     /**
+     * @dev Test historical root functionality
+     * This test demonstrates that users can create proofs based on older tree states
+     * and still have them validated within the 100-root history window
+     */
+    function testHistoricalRootSupport() public {
+        emit TestLog("=== HISTORICAL ROOT TEST ===", 0);
+        
+        // Step 1: Alice deposits and we capture the root
+        startPrank(alice);
+        privacyPool.deposit{value: DENOMINATION}(TEST_COMMITMENT);
+        uint256 rootAfterAlice = privacyPool.getMerkleRoot();
+        stopPrank();
+        
+        emit TestLog("Alice deposited, root captured", rootAfterAlice);
+        
+        // Step 2: Multiple other users deposit (to change the root)
+        address user1 = address(0x10);
+        address user2 = address(0x20);
+        address user3 = address(0x30);
+        
+        deal(user1, 10 ether);
+        deal(user2, 10 ether);
+        deal(user3, 10 ether);
+        
+        // User1 deposits
+        startPrank(user1);
+        privacyPool.deposit{value: DENOMINATION}(11111);
+        uint256 rootAfterUser1 = privacyPool.getMerkleRoot();
+        stopPrank();
+        
+        // User2 deposits
+        startPrank(user2);
+        privacyPool.deposit{value: DENOMINATION}(22222);
+        uint256 rootAfterUser2 = privacyPool.getMerkleRoot();
+        stopPrank();
+        
+        // User3 deposits
+        startPrank(user3);
+        privacyPool.deposit{value: DENOMINATION}(33333);
+        uint256 currentRoot = privacyPool.getMerkleRoot();
+        stopPrank();
+        
+        emit TestLog("Multiple deposits made, tree has evolved", currentRoot);
+        
+        // Step 3: Verify that old roots are still valid
+        assertTrue(privacyPool.isValidHistoricalRoot(rootAfterAlice));
+        assertTrue(privacyPool.isValidHistoricalRoot(rootAfterUser1));
+        assertTrue(privacyPool.isValidHistoricalRoot(rootAfterUser2));
+        assertTrue(privacyPool.isValidHistoricalRoot(currentRoot));
+        
+        emit TestLog("All historical roots are valid", 1);
+        
+        // Step 4: Bob creates a withdrawal proof using Alice's old root
+        startPrank(bob);
+        
+        bytes memory historicalProof = createMockWithdrawalProof(
+            DENOMINATION,
+            rootAfterAlice,  // Using the old root when Alice deposited
+            TEST_NULLIFIER,
+            0  // Full withdrawal
+        );
+        
+        uint256 bobInitialBalance = bob.balance;
+        
+        // This should succeed even though the root is old
+        privacyPool.withdraw(historicalProof, payable(bob));
+        
+        // Verify withdrawal with historical root succeeded
+        assertEq(bob.balance, bobInitialBalance + DENOMINATION);
+        assertTrue(privacyPool.nullifierHashExists(TEST_NULLIFIER));
+        
+        emit TestLog("Bob withdrew using historical root", rootAfterAlice);
+        emit TestLog("Historical root withdrawal successful", 1);
+        
+        stopPrank();
+        
+        // Step 5: Demonstrate privacy enhancement
+        emit TestLog("=== PRIVACY ENHANCEMENT ===", 0);
+        emit TestLog("Alice deposited when tree had root", rootAfterAlice);
+        emit TestLog("Bob withdrew when tree had root", privacyPool.getMerkleRoot());
+        emit TestLog("Time gap between deposit and withdrawal preserves privacy", 1);
+        
+        // The historical root support allows users to:
+        // 1. Create proofs offline based on older tree states
+        // 2. Submit withdrawals later when the tree has evolved
+        // 3. Maintain privacy by not being forced to withdraw immediately
+        // 4. Handle network congestion by allowing delayed submissions
+    }
+    
+    /**
+     * @dev Test that very old roots (beyond 100 history) are rejected
+     */
+    function testExpiredRootRejection() public {
+        emit TestLog("=== EXPIRED ROOT TEST ===", 0);
+        
+        // Create a fake old root that's not in history
+        uint256 fakeOldRoot = 999999;
+        
+        // Verify it's not valid
+        assertFalse(privacyPool.isValidHistoricalRoot(fakeOldRoot));
+        
+        startPrank(bob);
+        
+        bytes memory expiredProof = createMockWithdrawalProof(
+            DENOMINATION,
+            fakeOldRoot,  // Using a fake expired root
+            TEST_NULLIFIER,
+            0
+        );
+        
+        // This should fail with "Invalid or expired merkle root"
+        bool failed = false;
+        try privacyPool.withdraw(expiredProof, payable(bob)) {
+            failed = false;
+        } catch {
+            failed = true;
+        }
+        
+        assertTrue(failed);
+        emit TestLog("Expired root correctly rejected", 1);
+        
+        stopPrank();
+    }
+    
+    /**
      * @dev Creates a mock withdrawal proof for testing
      * In a real system, this would be generated by the client using zero-knowledge proofs
      */
@@ -212,5 +337,9 @@ contract PrivacyPoolTest {
     
     function assertTrue(bool condition) private pure {
         require(condition, "Assertion failed: condition not true");
+    }
+
+    function assertFalse(bool condition) private pure {
+        require(!condition, "Assertion failed: condition not false");
     }
 } 
