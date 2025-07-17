@@ -13,7 +13,10 @@ const main = async () => {
     throw new Error("Note not found");
   }
 
+  const now = performance.now();
   const { proof, newNote } = await generateProof(note, tree, 10n);
+  const end = performance.now();
+  console.log(`Proof generation took ${end - now}ms`);
 
   const withdrawAmount = proof.publicInputs[0];
   const merkleRoot = u256FromArrayBE(
